@@ -13,12 +13,12 @@ const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS?.trim();
 const SEPOLIA_RPC = process.env.SEPOLIA_RPC?.trim();
 
 if (!CONTRACT_ADDRESS || !SEPOLIA_RPC) {
-  console.error("❌ Missing .env variables");
+  console.error("Missing .env variables");
   process.exit(1);
 }
 
 if (!ethers.isAddress(CONTRACT_ADDRESS)) {
-  console.error("❌ CONTRACT_ADDRESS is invalid");
+  console.error("CONTRACT_ADDRESS is invalid");
   process.exit(1);
 }
 

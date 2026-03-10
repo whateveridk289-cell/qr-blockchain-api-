@@ -1,4 +1,0 @@
-express
-cors
-ethers
-dotenv
