@@ -1,73 +1,62 @@
-require('dotenv').config();
+require('dotenv').config(); // load env first
 
 const express = require("express");
 const { ethers } = require("ethers");
 const cors = require("cors");
-const fetch = require("node-fetch"); 
+const fetch = global.fetch; 
 
 const app = express();
-app.use(cors()); // Allow mobile app / browser access
+app.use(cors());
 
-// Config from .env
 const PORT = process.env.PORT || 3000;
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
-const SEPOLIA_RPC = process.env.SEPOLIA_RPC;
-const IPFS_GATEWAY = process.env.IPFS_GATEWAY || "https://gray-peaceful-earwig-933.mypinata.cloud/ipfs/";
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS?.trim();
+const SEPOLIA_RPC = process.env.SEPOLIA_RPC?.trim();
 
-// ABI of your smart contract
+if (!CONTRACT_ADDRESS || !SEPOLIA_RPC) {
+  console.error("❌ Missing .env variables");
+  process.exit(1);
+}
+
+if (!ethers.isAddress(CONTRACT_ADDRESS)) {
+  console.error("❌ CONTRACT_ADDRESS is invalid");
+  process.exit(1);
+}
+
 const ABI = [
   "function getMetadataCount() view returns (uint)",
   "function getMetadata(uint) view returns (string,string,uint256,string)"
 ];
 
-// Setup ethers provider & contract
 const provider = new ethers.JsonRpcProvider(SEPOLIA_RPC);
 const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
 
-// API endpoint to fetch all product metadata
+// API endpoint
 app.get("/product-data", async (req, res) => {
   try {
     const count = await contract.getMetadataCount();
-    let results = [];
+    const results = [];
 
     for (let i = 0; i < count; i++) {
       const record = await contract.getMetadata(i);
-
       const cid = record[0];
       const timestamp = record[2];
       const status = record[3];
 
-      const ipfsURL = `${IPFS_GATEWAY}${cid}`;
-
+      const ipfsURL = `https://gray-peaceful-earwig-933.mypinata.cloud/ipfs/${cid}`;
       try {
         const response = await fetch(ipfsURL);
         const json = await response.json();
-
-        results.push({
-          cid,
-          timestamp: timestamp.toString(),
-          status,
-          data: json
-        });
-      } catch (ipfsError) {
-        results.push({
-          cid,
-          timestamp: timestamp.toString(),
-          status,
-          data: "IPFS fetch failed"
-        });
+        results.push({ cid, timestamp: timestamp.toString(), status, data: json });
+      } catch {
+        results.push({ cid, timestamp: timestamp.toString(), status, data: "IPFS fetch failed" });
       }
     }
 
     res.json(results);
-
-  } catch (error) {
-    console.error("Error fetching metadata:", error);
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
