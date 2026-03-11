@@ -31,7 +31,7 @@ const provider = new ethers.JsonRpcProvider(SEPOLIA_RPC);
 const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
 
 // API endpoint
-app.get("/product-data", async (req, res) => {
+app.get("/product-data", async (req, res) => { 
   try {
     const count = await contract.getMetadataCount();
     const results = [];
@@ -39,6 +39,7 @@ app.get("/product-data", async (req, res) => {
     for (let i = 0; i < count; i++) {
       const record = await contract.getMetadata(i);
       const cid = record[0];
+      // const hash = record[1];
       const hash = record[1];
       const timestamp = record[2];
       const status = record[3];
