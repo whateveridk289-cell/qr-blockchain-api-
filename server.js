@@ -1,4 +1,4 @@
-require('dotenv').config(); // load env first
+require('dotenv').config(); 
 
 const express = require("express");
 const { ethers } = require("ethers");
@@ -39,6 +39,7 @@ app.get("/product-data", async (req, res) => {
     for (let i = 0; i < count; i++) {
       const record = await contract.getMetadata(i);
       const cid = record[0];
+      const hash = record[1];
       const timestamp = record[2];
       const status = record[3];
 
@@ -46,9 +47,9 @@ app.get("/product-data", async (req, res) => {
       try {
         const response = await fetch(ipfsURL);
         const json = await response.json();
-        results.push({ cid, timestamp: timestamp.toString(), status, data: json });
+        results.push({ cid, hash, timestamp: timestamp.toString(), status, data: json });
       } catch {
-        results.push({ cid, timestamp: timestamp.toString(), status, data: "IPFS fetch failed" });
+        results.push({ cid, hash, timestamp: timestamp.toString(), status, data: "IPFS fetch failed" });
       }
     }
 
